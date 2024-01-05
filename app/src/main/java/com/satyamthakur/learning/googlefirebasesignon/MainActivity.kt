@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.Identity
 import com.satyamthakur.learning.googlefirebasesignon.presentation.signin.GoogleAuthUIClient
+import com.satyamthakur.learning.googlefirebasesignon.presentation.signin.ProfileScreen
 import com.satyamthakur.learning.googlefirebasesignon.presentation.signin.SignInScreen
 import com.satyamthakur.learning.googlefirebasesignon.presentation.signin.SignInViewModel
 import com.satyamthakur.learning.googlefirebasesignon.ui.theme.GoogleFirebaseSignonTheme
@@ -50,6 +51,12 @@ class MainActivity : ComponentActivity() {
                             val viewModel = viewModel<SignInViewModel>()
                             val state by viewModel.state.collectAsStateWithLifecycle()
 
+                            LaunchedEffect(key1 = Unit) {
+                                if (googleAuthUiClient.getSignedInUser() != null) {
+                                    navController.navigate("profile")
+                                }
+                            }
+
                             val launcher = rememberLauncherForActivityResult(
                                 contract = ActivityResultContracts.StartIntentSenderForResult(),
                                 onResult = { result ->
@@ -71,6 +78,9 @@ class MainActivity : ComponentActivity() {
                                         "Signed In",
                                         Toast.LENGTH_LONG
                                     ).show()
+
+                                    navController.navigate("profile")
+                                    viewModel.resetState()
                                 }
                             }
 
@@ -86,6 +96,24 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 })
+                        }
+
+                        composable("profile") {
+                            ProfileScreen(
+                                userData = googleAuthUiClient.getSignedInUser(),
+                                onSignOut = {
+                                    lifecycleScope.launch {
+                                        googleAuthUiClient.signOut()
+                                        Toast.makeText(
+                                            applicationContext,
+                                            "Signed Out",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+
+                                        navController.popBackStack()
+                                    }
+                                }
+                            )
                         }
                     }
                 }
